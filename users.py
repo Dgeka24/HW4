@@ -2,6 +2,7 @@
 User = \
 {
     'name' : None,
+    'class' : 'Default',
     'user_id' : None,
     'items' : [],
     'money' : 100,

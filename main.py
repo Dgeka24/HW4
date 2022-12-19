@@ -26,17 +26,20 @@ async def register(message):
         return
     msg = message.text.split()
     if len(msg) == 1:
-        await bot.reply_to(message, "Use /start_game <nickname> to register account. Enter your nickname")
+        await bot.reply_to(message, "Use /start_game <nickname> <class> to register account. Enter your nickname")
+    elif len(msg) != 3:
+        await bot.reply_to(message, "Use /start_game <nickname> <class> to register account. Enter your nickname")
     else:
         user_id = message.chat.id
-        username = ' '.join(msg[1:])
-        database.create_user(user_id, username)
+        username = msg[1]
+        play_class = msg[2]
+        database.create_user(user_id, username, play_class)
         await bot.reply_to(message, "You have created account!")
 
 @bot.message_handler(commands=['location'])
 async def location(message):
     if not database.check_user(message.chat.id):
-        await bot.reply_to(message, "Register using [/start_game <nickname>]")
+        await bot.reply_to(message, "Register using [/start_game <nickname> <class>]")
         return
     location = database.get_location(message.chat.id)
     ans_string = location['name'] + '\n' + location['enter_msg']
@@ -45,7 +48,7 @@ async def location(message):
 @bot.message_handler(commands=['transitions'])
 async def location(message):
     if not database.check_user(message.chat.id):
-        await bot.reply_to(message, "Register using [/start_game <nickname>]")
+        await bot.reply_to(message, "Register using [/start_game <nickname> <class>]")
         return
     transitions = database.possible_transitions(message.chat.id)
     ans_string = '\n'.join(transitions)
@@ -54,7 +57,7 @@ async def location(message):
 @bot.message_handler(commands=['goto'])
 async def goto(message):
     if not database.check_user(message.chat.id):
-        await bot.reply_to(message, "Register using [/start_game <nickname>]")
+        await bot.reply_to(message, "Register using [/start_game <nickname> <class>]")
         return
     msg = message.text.split()
     if len(msg) == 1:
@@ -73,7 +76,7 @@ async def goto(message):
 @bot.message_handler(commands=['sell'])
 async def sell(message):
     if not database.check_user(message.chat.id):
-        await bot.reply_to(message, "Register using [/start_game <nickname>]")
+        await bot.reply_to(message, "Register using [/start_game <nickname> <class>]")
         return
     user_id = message.chat.id
     if database.get_location(user_id)['name'] != 'Shop':

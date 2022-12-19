@@ -12,13 +12,22 @@ def check_user(user_id):
     collection = db['users']
     return len(list(collection.find({'user_id' : user_id}))) > 0
 
-def create_user(user_id, username):
+def create_user(user_id, username, play_class = 'Default'):
     db = cluster['DB']
     collection = db['users']
     user = dict(users.User)
     user['user_id'] = user_id
     user['name'] = username
     user['location'] = 'City'
+    if play_class == 'Rogue':
+        user['cur_hp'] = 50
+        user['max_hp'] = 50
+        user['attack'] = 10
+    elif play_class == 'Wizard':
+        user['cur_hp'] = 70
+        user['max_hp'] = 70
+        user['cur_mana'] = 120
+        user['max_mana'] = 120
     collection.insert_one(user)
 
 def get_user(user_id):
