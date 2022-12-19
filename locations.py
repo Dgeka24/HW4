@@ -3,7 +3,7 @@
 City = \
 {
     'name' : 'City',
-    'transitions' : ['Shop'],
+    'transitions' : ['Shop', 'Dungeon'],
     'enter_msg' : 'You are in city'
 }
 Shop = \
@@ -12,9 +12,15 @@ Shop = \
     'transitions' : ['City'],
     'enter_msg' : 'You are in shop. Buy items by [/buy <item_name>] and sell by [/sell <item_name>]'
 }
-
+Dungeon = \
+{
+    'name' : 'Dungeon',
+    'transitions' : ['City'],
+    'enter_msg' : 'You are in Dungeon. Type [/fight] to fight',
+}
 locations_dict = \
 {
     'Shop' : Shop,
     'City' : City,
+    'Dungeon' : Dungeon,
 }

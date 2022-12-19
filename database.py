@@ -1,7 +1,9 @@
 import items
 import locations
+import mobs
 import users
 import pymongo
+import random
 from pymongo import MongoClient
 cluster = MongoClient('mongodb+srv://Test123:Test123@cluster0.bd7x4ih.mongodb.net/?retryWrites=true&w=majority')
 
@@ -151,6 +153,83 @@ def get_stats(user_id):
                 item = items.items_dict[item_name]
                 ans[stat_type] += item.get(stat_type, 0)
     return ans
+
+def create_mob(user_id):
+    mob_type = random.choice(mobs.mob_list)
+    mob = dict(mob_type)
+    mob['user_id'] = user_id
+    db = cluster['DB']
+    collection = db['mobs']
+    collection.insert_one(mob)
+    user = get_user(user_id)
+    collection_user = db['users']
+    collection_user.delete_one(user)
+    user['user_state'] = 'fighting'
+    user['mob_id'] = collection.find_one(mob)['_id']
+    collection_user.insert_one(user)
+    return mob
+
+def get_mob(user_id):
+    user = get_user(user_id)
+    db = cluster['DB']
+    collection = db['mobs']
+    mob = collection.find_one({'_id' : user['mob_id']})
+    return mob
+
+def stop_fight(user_id):
+    db = cluster['DB']
+    collection_users = db['users']
+    collection_mobs = db['mobs']
+    user = get_user(user_id)
+    mob_id = user['mob_id']
+    collection_mobs.delete_one({'_id' : mob_id})
+    collection_users.delete_one(user)
+    user['user_state'] = 'chilling'
+    user['mob_id'] = None
+    collection_users.insert_one(user)
+
+def calc_harm(attack, defense):
+    return max(0, attack - defense)
+
+def attack(user_id):
+    # 0 - attacked, 1 - killed mob, 2 - killed player
+    db = cluster['DB']
+    collection_users = db['users']
+    collection_mobs = db['mobs']
+    user = get_user(user_id)
+    mob = collection_mobs.find_one({'_id' : user['mob_id']})
+    stats = get_stats(user_id)
+    collection_mobs.delete_one(mob)
+    collection_users.delete_one(user)
+    mob['cur_hp'] -= calc_harm(stats['attack'], mob['defense'])
+    if mob['cur_hp'] <= 0:
+        collection_users.insert_one(user)
+        collection_mobs.insert_one(mob)
+        return 1
+    user['cur_hp'] -= calc_harm(mob['attack'], stats['defense'])
+    if user['cur_hp'] <= 0:
+        collection_users.insert_one(user)
+        collection_mobs.insert_one(mob)
+        return 2
+    collection_users.insert_one(user)
+    collection_mobs.insert_one(mob)
+    return 0
+
+def kill_mob(user_id):
+    user = get_user(user_id)
+    mob = get_mob(user_id)
+    db = cluster['DB']
+    collection_users = db['users']
+    collection_users.delete_one(user)
+    user['exp'] += mob['exp']
+    collection_users.insert_one(user)
+    stop_fight(user_id)
+
+def kill_player(user_id):
+    user = get_user(user_id)
+    db = cluster['DB']
+    collection_users = db['users']
+    collection_users.delete_one(user)
 
 def check_db():
     db = cluster['DB']

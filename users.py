@@ -17,6 +17,8 @@ User = \
     'weapon' : None,
     'location' : None,
     'exp' : 0,
+    'user_state' : 'chilling',
+    'mob_id' : None,
 }
 
 

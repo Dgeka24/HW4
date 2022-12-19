@@ -168,6 +168,62 @@ async def stats(message):
         ans_string += str(key) + " : " + str(val) + "\n"
     await bot.reply_to(message, ans_string)
 
+@bot.message_handler(commands=['fight'])
+async def fight(message):
+    if not database.check_user(message.chat.id):
+        await bot.reply_to(message, "Register using [/start_game <nickname>]")
+        return
+    user_id = message.chat.id
+    user = database.get_user(user_id)
+    if user['location'] != 'Dungeon':
+        await bot.reply_to(message, "You are not in Dungeon to fight")
+        return
+    if user['user_state'] == 'fighting':
+        await bot.reply_to(message, "You are already in the fight")
+        return
+    mob = database.create_mob(user_id)
+    ans_string = 'Now you are fighting with: ' + mob['name'] + '\n'
+    await bot.reply_to(message, ans_string)
+
+@bot.message_handler(commands=['flee'])
+async def flee(message):
+    if not database.check_user(message.chat.id):
+        await bot.reply_to(message, "Register using [/start_game <nickname>]")
+        return
+    user_id = message.chat.id
+    user = database.get_user(user_id)
+    if user['user_state'] != 'fighting':
+        await bot.reply_to(message, "You are not fighting to flee")
+        return
+    database.stop_fight(user_id)
+    await bot.reply_to(message, "You successfully escaped!")
+
+@bot.message_handler(commands=['attack'])
+async def attack(message):
+    if not database.check_user(message.chat.id):
+        await bot.reply_to(message, "Register using [/start_game <nickname>]")
+        return
+    user_id = message.chat.id
+    user = database.get_user(user_id)
+    if user['user_state'] != 'fighting':
+        await bot.reply_to(message, "You are not fighting to attack")
+        return
+    response = database.attack(user_id)
+    if response == 0:
+        mob = database.get_mob(user_id)
+        user = database.get_user(user_id)
+        ans_string = "You attacked.\nYour hp now: " + str(user['cur_hp']) + '\nMob hp now: ' + str(mob['cur_hp']) + '\n'
+        await bot.reply_to(message, ans_string)
+    elif response == 1:
+        mob = database.get_mob(user_id)
+        database.kill_mob(user_id)
+        ans_string = "You killed " + mob['name']
+        await bot.reply_to(message, ans_string)
+    elif response == 2:
+        database.kill_player(user_id)
+        await bot.reply_to(message, "Congratulations, you died from cringe right now. Go rest a little bit and have some fun in real life. Oh, no real life sucks. Come back here when you get bored again. I miss you so much.")
+    else:
+        await bot.reply_to(message, "Если вы здесь, то вы сломали бота. Конец сессии утомляет :( ")
 
 @bot.message_handler(commands=['check_db'])
 async def check(message):
