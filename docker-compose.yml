@@ -1,0 +1,9 @@
+version: "3.0"
+
+services:
+  server:
+    build: .
+    command: tail -F anything
+    ports:
+      - 1234:1234
+
